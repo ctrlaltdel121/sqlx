@@ -325,7 +325,23 @@ func (db *DB) Select(dest interface{}, query string, args ...interface{}) error 
 // Any placeholder parameters are replaced with supplied args.
 // An error is returned if the result set is empty.
 func (db *DB) Get(dest interface{}, query string, args ...interface{}) error {
-	return Get(db, dest, query, args...)
+	return Get(db, dest, db.Rebind(query), args...)
+}
+
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return db.DB.Exec(db.Rebind(query), args...)
+}
+
+func (db *DB) Prepare(query string) (*sql.Stmt, error) {
+	return db.DB.Prepare(db.Rebind(query))
+}
+
+func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return db.DB.Query(db.Rebind(query), args...)
+}
+
+func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+	return db.DB.QueryRow(db.Rebind(query), args...)
 }
 
 // MustBegin starts a transaction, and panics on error.  Returns an *sqlx.Tx instead
@@ -350,7 +366,7 @@ func (db *DB) Beginx() (*Tx, error) {
 // Queryx queries the database and returns an *sqlx.Rows.
 // Any placeholder parameters are replaced with supplied args.
 func (db *DB) Queryx(query string, args ...interface{}) (*Rows, error) {
-	r, err := db.DB.Query(query, args...)
+	r, err := db.DB.Query(db.Rebind(query), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -460,6 +476,10 @@ func (tx *Tx) MustExec(query string, args ...interface{}) sql.Result {
 // Preparex  a statement within a transaction.
 func (tx *Tx) Preparex(query string) (*Stmt, error) {
 	return Preparex(tx, query)
+}
+
+func (tx *Tx) Prepare(query string) (*sql.Stmt, error) {
+	return tx.Tx.Prepare(tx.Rebind(query))
 }
 
 // Stmtx returns a version of the prepared statement which runs within a transaction.  Provided
