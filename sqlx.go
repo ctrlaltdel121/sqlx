@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/jmoiron/sqlx/reflectx"
+	"github.com/ctrlaltdel121/sqlx/reflectx"
 )
 
 // Although the NameMapper is convenient, in practice it should not
@@ -305,7 +305,19 @@ func (db *DB) Select(dest interface{}, query string, args ...interface{}) error 
 
 // Get using this DB.
 func (db *DB) Get(dest interface{}, query string, args ...interface{}) error {
-	return Get(db, dest, query, args...)
+	return Get(db, dest, db.Rebind(query), args...)
+}
+
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return db.DB.Exec(db.Rebind(query), args...)
+}
+
+func (db *DB) Prepare(query string) (*sql.Stmt, error) {
+	return db.DB.Prepare(db.Rebind(query))
+}
+
+func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return db.DB.Query(db.Rebind(query), args...)
 }
 
 // MustBegin starts a transaction, and panics on error.  Returns an *sqlx.Tx instead
@@ -329,7 +341,7 @@ func (db *DB) Beginx() (*Tx, error) {
 
 // Queryx queries the database and returns an *sqlx.Rows.
 func (db *DB) Queryx(query string, args ...interface{}) (*Rows, error) {
-	r, err := db.DB.Query(query, args...)
+	r, err := db.DB.Query(db.Rebind(query), args...)
 	if err != nil {
 		return nil, err
 	}
