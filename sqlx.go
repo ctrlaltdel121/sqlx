@@ -443,6 +443,10 @@ func (tx *Tx) Preparex(query string) (*Stmt, error) {
 	return Preparex(tx, query)
 }
 
+func (tx *Tx) Prepare(query string) (*sql.Stmt, error) {
+	return tx.Tx.Prepare(tx.Rebind(query))
+}
+
 // Stmtx returns a version of the prepared statement which runs within a transaction.  Provided
 // stmt can be either *sql.Stmt or *sqlx.Stmt.
 func (tx *Tx) Stmtx(stmt interface{}) *Stmt {
