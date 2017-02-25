@@ -320,6 +320,10 @@ func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return db.DB.Query(db.Rebind(query), args...)
 }
 
+func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+	return db.DB.QueryRow(db.Rebind(query), args...)
+}
+
 // MustBegin starts a transaction, and panics on error.  Returns an *sqlx.Tx instead
 // of an *sql.Tx.
 func (db *DB) MustBegin() *Tx {
