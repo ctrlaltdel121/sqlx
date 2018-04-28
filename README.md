@@ -1,6 +1,6 @@
-#sqlx
+# sqlx
 
-[![Build Status](https://drone.io/github.com/ctrlaltdel121/sqlx/status.png)](https://drone.io/github.com/ctrlaltdel121/sqlx/latest) [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/ctrlaltdel121/sqlx) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/jmoiron/sqlx/master/LICENSE)
+[![Build Status](https://travis-ci.org/ctrlaltdel121/sqlx.svg?branch=master)](https://travis-ci.org/ctrlaltdel121/sqlx) [![Coverage Status](https://coveralls.io/repos/github/ctrlaltdel121/sqlx/badge.svg?branch=master)](https://coveralls.io/github/ctrlaltdel121/sqlx?branch=master) [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/ctrlaltdel121/sqlx) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/ctrlaltdel121/sqlx/master/LICENSE)
 
 sqlx is a library which provides a set of extensions on go's standard
 `database/sql` library.  The sqlx versions of `sql.DB`, `sql.TX`, `sql.Stmt`,
@@ -15,31 +15,18 @@ Major additional concepts are:
 * `Get` and `Select` to go quickly from query to struct/slice
 
 In addition to the [godoc API documentation](http://godoc.org/github.com/ctrlaltdel121/sqlx),
-there is also some [standard documentation](http://jmoiron.github.io/sqlx/) that
+there is also some [standard documentation](http://ctrlaltdel121.github.io/sqlx/) that
 explains how to use `database/sql` along with sqlx.
 
 ## Recent Changes
 
-The addition of `sqlx.In` and `sqlx.Named`, which can be used to bind IN style
-queries and named queries respectively.
+* sqlx/types.JsonText has been renamed to JSONText to follow Go naming conventions.
 
-```go
-ids := []int{1, 2, 3}
-query, args, err := sqlx.In("SELECT * FROM person WHERE id IN(?);", ids)
+This breaks backwards compatibility, but it's in a way that is trivially fixable
+(`s/JsonText/JSONText/g`).  The `types` package is both experimental and not in
+active development currently.
 
-chris := Person{First: "Christian", Last: "Cullen"}
-query, args, err := sqlx.Named("INSERT INTO person VALUES (:first, :last);", chris)
-
-// these can be combined:
-arg := map[string]interface{}{
-    "published": true,
-    "authors": []{8, 19, 32, 44},
-}
-query, args, err := sqlx.Named("SELECT * FROM articles WHERE published=:published AND author_id IN (:authors)", arg)
-query, args, err := sqlx.In(query, args...)
-// finally, if you're using eg. pg, you can rebind the query:
-query = db.Rebind(query)
-```
+* Using Go 1.6 and below with `types.JSONText` and `types.GzippedText` can be _potentially unsafe_, **especially** when used with common auto-scan sqlx idioms like `Select` and `Get`. See [golang bug #13905](https://github.com/golang/go/issues/13905).
 
 ### Backwards Compatibility
 
@@ -79,10 +66,11 @@ usage.
 package main
 
 import (
-    _ "github.com/lib/pq"
     "database/sql"
-    "github.com/ctrlaltdel121/sqlx"
     "log"
+    
+    _ "github.com/lib/pq"
+    "github.com/ctrlaltdel121/sqlx"
 )
 
 var schema = `
@@ -123,7 +111,7 @@ func main() {
     db.MustExec(schema)
     
     tx := db.MustBegin()
-    tx.MustExec("INSERT INTO person (first_name, last_name, email) VALUES ($1, $2, $3)", "Jason", "Moiron", "jmoiron@jmoiron.net")
+    tx.MustExec("INSERT INTO person (first_name, last_name, email) VALUES ($1, $2, $3)", "Jason", "Moiron", "ctrlaltdel121@ctrlaltdel121.net")
     tx.MustExec("INSERT INTO person (first_name, last_name, email) VALUES ($1, $2, $3)", "John", "Doe", "johndoeDNE@gmail.net")
     tx.MustExec("INSERT INTO place (country, city, telcode) VALUES ($1, $2, $3)", "United States", "New York", "1")
     tx.MustExec("INSERT INTO place (country, telcode) VALUES ($1, $2)", "Hong Kong", "852")
@@ -138,14 +126,14 @@ func main() {
     jason, john := people[0], people[1]
 
     fmt.Printf("%#v\n%#v", jason, john)
-    // Person{FirstName:"Jason", LastName:"Moiron", Email:"jmoiron@jmoiron.net"}
+    // Person{FirstName:"Jason", LastName:"Moiron", Email:"ctrlaltdel121@ctrlaltdel121.net"}
     // Person{FirstName:"John", LastName:"Doe", Email:"johndoeDNE@gmail.net"}
 
     // You can also get a single result, a la QueryRow
     jason = Person{}
     err = db.Get(&jason, "SELECT * FROM person WHERE first_name=$1", "Jason")
     fmt.Printf("%#v\n", jason)
-    // Person{FirstName:"Jason", LastName:"Moiron", Email:"jmoiron@jmoiron.net"}
+    // Person{FirstName:"Jason", LastName:"Moiron", Email:"ctrlaltdel121@ctrlaltdel121.net"}
 
     // if you have null fields and use SELECT *, you must use sql.Null* in your struct
     places := []Place{}
