@@ -159,6 +159,10 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 	return db.DB.QueryContext(ctx, db.Rebind(query), args...)
 }
 
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return db.DB.QueryRowContext(ctx, db.Rebind(query), args...)
+}
+
 // PreparexContext returns an sqlx.Stmt instead of a sql.Stmt.
 //
 // The provided context is used for the preparation of the statement, not for
