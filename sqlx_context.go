@@ -147,6 +147,18 @@ func (db *DB) GetContext(ctx context.Context, dest interface{}, query string, ar
 	return GetContext(ctx, db, dest, query, args...)
 }
 
+func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return db.DB.ExecContext(ctx, db.Rebind(query), args...)
+}
+
+func (db *DB) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+	return db.DB.PrepareContext(ctx, db.Rebind(query))
+}
+
+func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return db.DB.QueryContext(ctx, db.Rebind(query), args...)
+}
+
 // PreparexContext returns an sqlx.Stmt instead of a sql.Stmt.
 //
 // The provided context is used for the preparation of the statement, not for
